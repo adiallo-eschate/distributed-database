@@ -18,13 +18,12 @@ class RBNode {
         System.out.printf("Color={%s}\n", this.color);
         System.out.print("Parent ref: ");
         System.out.println(this.parent);
+        if (this.parent != null) System.out.printf("parentKey={%d}\n", this.parent.key);
         System.out.print("Left Child: ");
-        System.out.print(this.left);
-        if (this.left != null) System.out.println(this.left.key);
+        System.out.println(this.left);
         System.out.print("Right Child: ");
-        System.out.print(this.right);
-        if (this.right != null) System.out.println(this.right.key);
-        System.out.println("-----------------------");
+        System.out.println(this.right);
+        System.out.println("-----------------------------------------");
     }
 }
 
@@ -73,25 +72,73 @@ public class RedBlackTree {
             System.out.println("Target Found");
             root.printNode();
         } else if ((target > root.key) && (root.right != null)){
-            search(root.right, target);
+             search(root.right, target);
         } else if ((target < root.key) && (root.left != null)){
             search(root.left, target);
         } else {
+
             System.out.println("Target Does Not Exist");
             return;
         }
+
+    }
+
+    void insert(RBNode root, Integer key){
+        int levelsSearched = 0;
+        if (root == null){
+            root = this.root;
+        }
+
+
+        if ((key > root.key) && (root.right == null)){
+            RBNode insertNode = new RBNode(key);
+            root.right = insertNode;
+            System.out.println("Inserted On Right " + key);
+        } else if ((key < root.key) && (root.left == null)){
+            RBNode insertNode = new RBNode(key);
+            root.left = insertNode;
+            System.out.println("Inserted On Left " + key);
+        } else if ((key > root.key) && (root.right != null)){
+            insert(root.right, key);
+        } else if ((key < root.key) && (root.left != null)){
+            insert(root.left, key);
+        } else {
+            System.out.println("Could Not Insert Key");
+        }
+
+        levelsSearched++;
+
     }
 
     void printTree(RBNode node){
-        root = this.root;
-        System.out.println(root.key);
-        if (root.left != null){
-            node = root.left;
-            printTree(root.left);
-        } else if (root.right != null){
-            node = root.right;
-            printTree(root.right);
+        System.out.println("--------- Tree Print Begin ------------");
+        if (node == null){
+            node = this.root;
         }
+
+        ArrayList<RBNode> arr = new ArrayList<>();
+
+        if (node.left != null){
+            arr.add(node.left);
+        }
+
+        if (node.right != null){
+            arr.add(node.right);
+        }
+        
+        node.printNode();
+
+        for (int i = 0; i < arr.size(); i++){
+            arr.get(i).printNode();
+            
+            if (arr.get(i).left != null){
+                arr.add(arr.get(i).left);
+            } else if(arr.get(i).right != null){
+                arr.add(arr.get(i).right);
+            }
+        }
+
+        System.out.println("--------- Tree Print End --------------");
     }
 
 
@@ -99,18 +146,10 @@ public class RedBlackTree {
     public static void main(String[] args){
 
         RedBlackTree tree = new RedBlackTree(20);
-        RBNode n1 = new RBNode(14);
-        RBNode n2 = new RBNode(21);
-        RBNode n3 = new RBNode(50);
-        RBNode n4 = new RBNode(7);
-        RBNode n5 = new RBNode(25);
-        tree.addLeftChild(tree.root, n1);
-        tree.addRightChild(tree.root, n2);
-        tree.addRightChild(n2, n3);
-        tree.addLeftChild(n2, n4);
-        tree.addRightChild(n1, n5);
         tree.printTree(tree.root);
-        tree.search(tree.root, 25);
-        tree.root.printNode();
+        tree.search(tree.root, 15);
+        tree.insert(tree.root, 13);
+        tree.insert(tree.root, 100);
+        tree.printTree(tree.root);
     }
 }
