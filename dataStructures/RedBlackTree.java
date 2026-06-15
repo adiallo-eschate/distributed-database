@@ -33,7 +33,7 @@ public class RedBlackTree {
     RBNode root;
     RBNode Nil;
 
-    // RB Properties:
+    // RB stuff:
     // 1. Every node is Red or Black.
     // 2. Root is always Black.
     // 3. NIL sentinel is Black.
