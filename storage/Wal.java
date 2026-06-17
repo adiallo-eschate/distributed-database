@@ -1,64 +1,76 @@
-class Wal {
-    Stack<String> walStack = new Stack<>();
-    String filePath = "temp.wal";
-    BufferedWriter w;
-    BufferedReader r;
-
-    void printStack(){
-       
-       System.out.println("------ Start Print ------");
-       for (String item : walStack){
-            System.out.println(item);
-       }
-       System.out.println("------- End Print --------");
-       
-    }
-
-    
-    void setWalStack(String key){
-        this.walStack.push(key);
-        System.out.println("set good '" + this.walStack.peek() + "'");
-    }
-
-    String getWalStack(){
-        return this.walStack.pop();
-    }
-
-    
-    void write(String key){
-        this.walStack.push(key);
-    }
+import java.io.*;
+import java.util.*;
 
 
-    void replayWal(){
-        
-        try(BufferedReader r = new BufferedReader(new FileReader(this.filePath))){
+class WAL {
+
+      ArrayList<String> walArr;
+
+      WAL(){
+         this.walArr = new ArrayList<>();
+
+      }
+
+      void addRecord(String command, Record r){
+            
+         command.toLowerCase();
+
+         String walRecord = "";
+         walRecord += command + ",";
+         walRecord += String.valueOf(r.key) + ",";
+         walRecord += r.value;
+         
+         this.walArr.add(walRecord);
+         System.out.println("Add command to WAL: " + walRecord);
+      }
+
+      ArrayList<String> replay(){
+
+         ArrayList<String> walArr = new ArrayList<>();
+         
+          try(BufferedReader br = new BufferedReader(new FileReader("WAL.txt"))){
 
             String line;
-            while((line = r.readLine()) != null){
-               System.out.println("Read Line: " + line);
+
+            while((line = br.readLine()) != null){
+               walArr.add(line);
+               System.out.println("Read line from WAL:" + line);
             }
+
+
+          } catch (IOException e){
+            e.printStackTrace();
+          }
+          
+          return walArr;
+      }
+
+      void flush(){
+
+         String fileName = "WAL.txt";
          
+         try(BufferedWriter bw = new BufferedWriter(new FileWriter(fileName, true))){
 
-            r.close();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-
-    void flushStack(){
-
-        try(BufferedWriter w = new BufferedWriter(new FileWriter(this.filePath, true))){
-            
-            while(!this.walStack.empty()){
-                w.write(this.walStack.pop());
-                w.newLine();
+            for(String record : walArr){
+               bw.write(record);
+               bw.write("\n");
             }
 
-            w.close();
-        } catch (IOException e){
+            this.walArr.clear();
+
+         } catch (IOException e){
             e.printStackTrace();
-        }
-    }
+         }
+         
+      }
+
+      void clear(){
+         
+         try(BufferedWriter bw = new BufferedWriter(new FileWriter("WAL.txt"))){
+               bw.write("");
+         } catch (IOException e){
+            e.printStackTrace();
+         }
+      }
 
 }
