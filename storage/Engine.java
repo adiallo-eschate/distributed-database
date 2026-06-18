@@ -6,6 +6,8 @@ import java.io.BufferedWriter;
 import java.nio.*;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.channels.*;
+import java.nio.file.*;
 
 
 
@@ -20,8 +22,11 @@ public class Engine {
     ArrayList<Record> arr = new ArrayList<>(Arrays.asList(r,r1,r2,r3));
 
    SSTable s = new SSTable(arr);
+   int counter = 1;
 
    s.write();
+   s.flushToDisk(counter);
+   counter++;
 
    /*s.dataOffset = 1000;
    s.indexOffset = 2000;
@@ -272,10 +277,42 @@ public class Engine {
          System.out.println("SSTable in bytes: " + Arrays.toString(this.sstable));
       }
 
-      void flushToDisk(){
+      void flushToDisk(int fileCounter){
+
+            if (this.sstable == null){
+               System.out.println("sstable is empty. Call write() first");
+               return;
+            }
+
+            try {
+                  String dirName = "level0";
+                  String fileName = "sst-" + fileCounter + ".sst";
+
+                  Path dirPath = Paths.get(dirName);
+                  Path filePath = dirPath.resolve(fileName);
+
+                  if (Files.notExists(dirPath)){
+                     Files.createDirectories(dirPath);
+                     System.out.println("Dir created: " + dirPath.toAbsolutePath());
+                  } 
+
+                  if (Files.notExists(filePath)){
+                     Files.createFile(filePath);
+                     System.out.println("File created: " + filePath.toAbsolutePath());
+                  }
+
+                  FileChannel ch = FileChannel.open(filePath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                  ByteBuffer bb = ByteBuffer.wrap(this.sstable);
+
+                  while(bb.hasRemaining()){
+                     ch.write(bb);
+                  }
+
+                  System.out.println("SSTable Flushed to Disk!");
             
-
-
+            } catch (IOException e){
+               e.printStackTrace();
+            }
       }
 
 }
