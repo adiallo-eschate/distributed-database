@@ -9,24 +9,68 @@ import java.nio.charset.StandardCharsets;
 import java.nio.channels.*;
 import java.nio.file.*;
 
-
+// remember to check deserializeRecord()
 
 public class Engine {
 
  public static void main(String[] args){
-    Record r = new Record(32, "Hello");
-    Record r1 = new Record(40, "jon");
-    Record r2 = new Record(25, "sansa");
-    Record r3 = new Record(100, "rob");
+    Record r = new Record(32, "Hello", Record.PUT);
+    Record r1 = new Record(40, "jon", Record.PUT);
+    Record r2 = new Record(25, "sansa", Record.DELETE);
+    Record r3 = new Record(100, "rob", Record.PUT);
 
     ArrayList<Record> arr = new ArrayList<>(Arrays.asList(r,r1,r2,r3));
 
+
+      
    SSTable s = new SSTable(arr);
    int counter = 1;
 
    s.write();
    s.flushToDisk(counter);
    counter++;
+
+
+    /*Serializer s = new Serializer();
+
+    for (Record rec : arr){
+      byte[] encoded = s.serializeRecord(rec);
+      s.deserializeRecord(encoded);
+    }*/
+   
+     /*Mem m = new Mem();
+     m.setKeyValue(r);
+     m.setKeyValue(r1);
+     m.setKeyValue(r2);
+     m.setKeyValue(r3);
+
+     System.out.println(m.getValue(100).value);
+
+     ArrayList<Record> k = m.flush();
+
+     System.out.println("flushed values: ");
+     for (Record rec : k){
+        System.out.println("Key: "+ rec.key + " value: "+ rec.value + " opType: " + rec.opType);
+     }*/
+   
+   
+   
+   
+   /*for (Record rec : arr){
+      rec.printRecord();
+   }
+
+   WAL wal = new WAL();
+   wal.addRecord(r);
+   wal.addRecord(r1);
+   wal.addRecord(r2);
+   wal.addRecord(r3);
+
+   wal.flush();
+   System.out.println(wal.walArr.size());
+   wal.replay();
+   wal.clear();*/
+
 
    /*s.dataOffset = 1000;
    s.indexOffset = 2000;
@@ -44,20 +88,6 @@ public class Engine {
 
 
    
- /*  Mem m = new Mem();
-   m.setKeyValue(r);
-   m.setKeyValue(r1);
-   m.setKeyValue(r2);
-   m.setKeyValue(r3);
-
-   System.out.println(m.getValue(r3));
-
-   ArrayList<Record> k = m.flush();
-
-   System.out.println("flushed values: ");
-   for (Record rec : k){
-      System.out.println("Key: "+ rec.key + "value: "+ rec.value);
-   }*/
     
  }
 }
@@ -85,6 +115,7 @@ public class Engine {
          
          int totalLength = 0;
          for (Record r : records){
+            totalLength += 1;
             totalLength += 2;   // 2 bytes for key's length
             totalLength += 2;    // and 2 bytes for value's length
             totalLength += r.value.length();
@@ -371,17 +402,25 @@ class Serializer {
 
       byte[] serializeRecord(Record record){
 
+         if ((record.opType < 0) || (record.opType > 2)){
+            System.out.println("Serializer: Invalid record");
+            return null;
+         }
+
          int key = record.key;
          String value = record.value;
+         int opType = record.opType;
 
          byte[] valueBytes = value.getBytes();
          int valueLength = value.length();
 
-         int totalLength = 2 + 2 + valueLength; 
+         int totalLength = 1 + 2 + 2 + valueLength; 
 
          byte[] entry = new byte[totalLength];
 
          int i = 0;
+
+         entry[i++] = (byte)(opType);
 
          entry[i++] = (byte)(key >>> 8);
          entry[i++] = (byte)(key);
@@ -400,6 +439,8 @@ class Serializer {
 
          int i = 0;
 
+         int opType = ((recordBytes[i++] & 0xFF));
+
          int key = 
                   ((recordBytes[i++] & 0xFF) << 8) | 
                   ((recordBytes[i++] & 0xFF));
@@ -409,10 +450,10 @@ class Serializer {
          
          String value = new String(recordBytes, i, valueLength, StandardCharsets.UTF_8);
 
+         // Fixme
+         Record r = new Record(key, value, opType);
 
-         Record r = new Record(key, value);
-
-         System.out.println("Decoded Record: " + r.key + " " + r.value);
+         System.out.println("Decoded Record: " + r.key + " " + r.value + " op: " + r.opType);
 
 
          return r;

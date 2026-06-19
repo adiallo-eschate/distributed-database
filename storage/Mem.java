@@ -4,33 +4,41 @@ import java.util.*;
 
 class Mem {
 
-      TreeMap<Integer, String> map;
+      TreeMap<Record, Integer> map;
 
       Mem(){
          this.map = new TreeMap<>();
       }
 
       void setKeyValue(Record r){
-         int key = r.key;
-         String value = r.value;
 
-            map.put(key,value);
+            map.put(r,r.opType);
+
       }
 
-      String getValue(Record r){
-         
-         int key = r.key;
-         
-          return map.get(key);
+      Record getValue(int key){
+
+         for (Record rec : map.keySet()){
+
+            if ((rec.key == key) && (map.get(rec) != Record.DELETE)){
+              
+               return rec;
+            
+            }
+
+         }
+
+         return null;
       }
 
       ArrayList<Record> flush(){
             
          ArrayList<Record> records = new ArrayList<>();
 
-            for (int key : map.keySet()){
-               Record r = new Record(key, map.get(key));
-               records.add(r);
+            for (Record rec : map.keySet()){
+                  
+                  records.add(rec);
+
             }
 
          clear();

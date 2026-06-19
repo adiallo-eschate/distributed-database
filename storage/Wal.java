@@ -11,16 +11,31 @@ class WAL {
 
       }
 
-      void addRecord(String command, Record r){
-            
-         command.toLowerCase();
+      void addRecord(Record r){
 
+         if ((r.opType > 2) || (r.opType < 0)){
+            System.out.println("WAL: Invalid Record");
+            return;
+         }
+            
          String walRecord = "";
-         walRecord += command + ",";
-         walRecord += String.valueOf(r.key) + ",";
-         walRecord += r.value;
-         
-         this.walArr.add(walRecord);
+
+         if (r.opType == Record.DELETE){
+
+            walRecord = "delete," + r.key;
+            walArr.add(walRecord);
+            return;
+
+         } else if (r.opType == Record.PUT){
+
+            walRecord = "put," + r.key + "," + r.value;
+            walArr.add(walRecord);
+         } else {
+
+            walRecord = "get," + r.key + "," + r.value;
+            walArr.add(walRecord);
+         }
+      
          System.out.println("Add command to WAL: " + walRecord);
       }
 

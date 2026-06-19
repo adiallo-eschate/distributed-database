@@ -26,6 +26,7 @@ import java.nio.file.*;
          
          int totalLength = 0;
          for (Record r : records){
+            totalLength += 1;
             totalLength += 2;   // 2 bytes for key's length
             totalLength += 2;    // and 2 bytes for value's length
             totalLength += r.value.length();
