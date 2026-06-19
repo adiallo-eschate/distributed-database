@@ -5,6 +5,8 @@ import java.nio.file.*;
 
 
 
+
+
  class SSTable {
 
        byte[] sstable;
@@ -43,7 +45,7 @@ import java.nio.file.*;
             for (byte b : localBytes) globalBytes[i++] = b;
          }
 
-         System.out.println("Data block bytes: "+ Arrays.toString(globalBytes));
+         //System.out.println("Data block bytes: "+ Arrays.toString(globalBytes));
          return globalBytes;
       }
 
@@ -75,7 +77,7 @@ import java.nio.file.*;
             positionInDataFile += 2 + 2 + valueLength;    //length of a record: 2 bytes for key + 2 bytes for valueLen + valueLen(bytes) 
          }
 
-         System.out.println("Index bytes: " + Arrays.toString(globalBytes));
+         //System.out.println("Index bytes: " + Arrays.toString(globalBytes));
          return globalBytes;
 
       }
@@ -99,7 +101,7 @@ import java.nio.file.*;
             bits[index3] = 1;
          }
 
-         System.out.println(Arrays.toString(bits));
+         //System.out.println(Arrays.toString(bits));
 
          return bits;
       }
@@ -167,7 +169,7 @@ import java.nio.file.*;
          globalBytes[i++] = (byte)(fOff >>> 8);
          globalBytes[i++] = (byte)(fOff);
 
-         System.out.println("Footer Bytes: " + Arrays.toString(globalBytes));
+         //System.out.println("Footer Bytes: " + Arrays.toString(globalBytes));
          return globalBytes;
       }
 
@@ -216,10 +218,12 @@ import java.nio.file.*;
          for (byte fByte : footerBlock) this.sstable[i++] = fByte;
 
       
-         System.out.println("SSTable in bytes: " + Arrays.toString(this.sstable));
+         System.out.println("SSTable written. Remember to Flush!");
+         //System.out.println("SSTable in bytes: " + Arrays.toString(this.sstable));
       }
 
-      void flushToDisk(int fileCounter){
+
+      void flushToDisk(int fileCounter, int dirCounter){
 
             if (this.sstable == null){
                System.out.println("sstable is empty. Call write() first");
@@ -227,7 +231,7 @@ import java.nio.file.*;
             }
 
             try {
-                  String dirName = "level0";
+                  String dirName = "level" + dirCounter;
                   String fileName = "sst-" + fileCounter + ".sst";
 
                   Path dirPath = Paths.get(dirName);
@@ -258,8 +262,6 @@ import java.nio.file.*;
       }
 
 }
-
-
 
 class Hash {
 
