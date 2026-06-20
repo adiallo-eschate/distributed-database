@@ -14,6 +14,124 @@ import java.io.File;
 
 public class Engine {
 
+      WAL wal;
+      Mem memtable;
+
+
+   Engine(WAL wal, Mem memtable){
+      this.wal = new WAL();
+      this.memtable = new Mem();
+   }
+
+   Record searchTables(){
+         // load sstables and check blooms
+      Path path = Paths.get("level0");
+      
+      if (Files.notExists(path)){
+         Path path1 = Paths.get("level1");
+         if (Files.notExists(path1)){
+            return null;
+         }
+      }
+
+      try(DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
+         
+         for(Path entry : stream){
+
+            byte[] fileBytes = Files.readAllBytes(entry);
+
+            int i = 0;
+            for (byte b : fileBytes){
+               if (b == (byte)('\\')){
+                  break;
+               }
+               i++;
+            }
+
+            int j = 0;
+            for (byte c : fileBytes){
+               if ((c == (byte)('\\')) && (j != i)){
+                  break;
+               }
+               j++;
+            }
+
+            int k = 0;
+            for (byte d : fileBytes){
+               if ((d == (byte)('\\')) && (k != i) && (k != j)){
+                  break;
+               }
+               k++;
+            }
+
+            System.out.println("Indices: " + i + " " + j + " " + k);
+
+            System.out.println(Arrays.toString(fileBytes));
+            byte[] data = Arrays.copyOf(fileBytes, i);
+            System.out.println("searchTables: data - " + Arrays.toString(data));
+
+            byte[] index = Arrays.copyOfRange(fileBytes, i + 1, j);
+            System.out.println("searchTables: index - " + Arrays.toString(index));
+
+            byte[] bloom = Arrays.copyOfRange(fileBytes, j + 1, k);
+            System.out.println("searchTables: bloom - " + Arrays.toString(bloom));
+
+            byte[] footer = Arrays.copyOfRange(fileBytes, k + 1, fileBytes.length);
+            System.out.println("searchTables: footer - " + Arrays.toString(footer));
+
+         
+            // search blooms
+
+            // if bloom true then search sstable
+         
+         
+         
+         
+         }
+
+      } catch (IOException e){
+         e.printStackTrace();
+      }
+
+      return null;
+   }
+
+   Record read(int key){
+      
+      Mem mem = this.memtable;
+
+      Record record = mem.getValue(key);
+      if (record != null) return record;
+
+      Record found = searchTables();
+
+      if (found != null){
+         return record;
+      } else {
+         return null;
+      }
+
+   }
+
+   void write(int key, String value){
+
+   }
+
+   void delete(int key){
+
+   }
+
+   void runCompaction(){
+
+   }
+
+   void recovery(){
+
+   }
+
+
+
+
  public static void main(String[] args){
     Record r = new Record(32, "Hello", Record.PUT);
     Record r1 = new Record(40, "jon", Record.PUT);
@@ -25,6 +143,13 @@ public class Engine {
    //for (Record rec : a){
    //   rec.printRecord();
    //}
+
+   Mem m = new Mem();
+   WAL w = new WAL();
+
+   Engine e = new Engine(w,m);
+
+   e.searchTables();
 
       
    /*SSTable s = new SSTable(arr);
