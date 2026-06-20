@@ -16,22 +16,27 @@ public class Engine {
 
       WAL wal;
       Mem memtable;
+      Hash hash;
+      Serializer s;
+      TieredCompaction compactor;
+
 
 
    Engine(WAL wal, Mem memtable){
       this.wal = new WAL();
       this.memtable = new Mem();
+      this.s = new Serializer();
+      this.compactor = new TieredCompaction();
+      this.hash = new Hash();
    }
 
-   Record searchTables(){
+
+   Record searchTables(Path dirPath, int key){
          // load sstables and check blooms
-      Path path = Paths.get("level0");
+      Path path = dirPath;
       
       if (Files.notExists(path)){
-         Path path1 = Paths.get("level1");
-         if (Files.notExists(path1)){
-            return null;
-         }
+         return null;
       }
 
       try(DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
@@ -64,28 +69,42 @@ public class Engine {
                k++;
             }
 
-            System.out.println("Indices: " + i + " " + j + " " + k);
+            //System.out.println("Indices: " + i + " " + j + " " + k);
 
-            System.out.println(Arrays.toString(fileBytes));
+            //System.out.println(Arrays.toString(fileBytes));
             byte[] data = Arrays.copyOf(fileBytes, i);
-            System.out.println("searchTables: data - " + Arrays.toString(data));
+            //System.out.println("searchTables: data - " + Arrays.toString(data));
 
             byte[] index = Arrays.copyOfRange(fileBytes, i + 1, j);
-            System.out.println("searchTables: index - " + Arrays.toString(index));
+            //System.out.println("searchTables: index - " + Arrays.toString(index));
 
             byte[] bloom = Arrays.copyOfRange(fileBytes, j + 1, k);
-            System.out.println("searchTables: bloom - " + Arrays.toString(bloom));
+            //System.out.println("searchTables: bloom - " + Arrays.toString(bloom));
 
             byte[] footer = Arrays.copyOfRange(fileBytes, k + 1, fileBytes.length);
-            System.out.println("searchTables: footer - " + Arrays.toString(footer));
+            //System.out.println("searchTables: footer - " + Arrays.toString(footer));
 
          
             // search blooms
+            int index1 = hash.hash1(key, bloom.length);
+            int index2 = hash.hash2(key, bloom.length);
+            int index3 = hash.hash3(key, bloom.length);
 
-            // if bloom true then search sstable
-         
-         
-         
+            if ((bloom[index1] == 1) && (bloom[index2] == 1) && (bloom[index3] == 1)){
+               System.out.println("Bloom Success");
+               ArrayList<Record> recs  = readDataBlock(data);
+
+               for (Record r : recs){
+                  if (r.key == key){
+                     System.out.println("Key Found");
+                     return r;
+                  }
+               }
+
+            } else {
+               System.out.println("Bloom Failed");
+               return null;
+            }
          
          }
 
@@ -99,36 +118,110 @@ public class Engine {
    Record read(int key){
       
       Mem mem = this.memtable;
+      WAL wal = this.wal;
 
       Record record = mem.getValue(key);
       if (record != null) return record;
 
-      Record found = searchTables();
+      Path path = Paths.get("level0");
+      Record found = searchTables(path, key);
 
       if (found != null){
-         return record;
+         Record rec = new Record(found.key, found.value, -1);
+         wal.addRecord(rec);
+         return found;
       } else {
-         return null;
+         Path p = Paths.get("level1");
+         Record f = searchTables(p, key);
+
+         if (found != null){
+            Record re = new Record(f.key, f.value, -1);
+            wal.addRecord(re);
+            return f;
+         }
       }
 
+      return null;
    }
 
-   void write(int key, String value){
+   int write(int key, String value){
 
+      if ((key < 0) || (value == null)){
+         return -1;
+      }
+
+      Record r = new Record(key,value, Record.PUT);
+      this.wal.addRecord(r);
+      this.memtable.setKeyValue(r);
+
+      System.out.println("Write Success");
+
+      return 1;
    }
 
-   void delete(int key){
+   int delete(int key){
 
+      if (key < 0){
+         return -1;
+      }
+
+      Record r = new Record(key, "null", Record.DELETE);
+      this.wal.addRecord(r);
+      this.memtable.setKeyValue(r);
+
+      System.out.println("Delete Success");
+
+      return 1;
    }
 
-   void runCompaction(){
-
-   }
 
    void recovery(){
 
    }
 
+
+   ArrayList<Record> readDataBlock(byte[] fileBytes){
+      
+      ArrayList<Record> records = new ArrayList<>();
+         
+            int k;
+            for (k = 0; k < fileBytes.length; k++){
+               if (fileBytes[k] == (byte)('\\')){
+                  //System.out.println("End of Datablock: " + (byte)(fileBytes[k]));
+                  break;
+               }
+            }
+
+            byte[] dataBlock = Arrays.copyOf(fileBytes, k);
+
+
+            //System.out.println("dataBlock: " + Arrays.toString(dataBlock));
+
+            int i = 0;
+            int j = 0;
+            while (i < dataBlock.length){
+               i += 3;  
+               int valueLength = ((dataBlock[i++] & 0xFF) << 8) |
+                                 ((dataBlock[i]));
+
+               //System.out.println(valueLength);
+
+
+               byte[] blockEntry = Arrays.copyOfRange(dataBlock, j, i + valueLength + 1);
+
+               i = (i + valueLength + 1);
+               j = i;
+
+               //System.out.println("ith positions: " + i);
+
+               //System.out.println("Block entry: " + Arrays.toString(blockEntry));
+
+               Record r = s.deserializeRecord(blockEntry);
+               records.add(r);
+            }
+      
+      return records;
+   }
 
 
 
@@ -143,91 +236,69 @@ public class Engine {
    //for (Record rec : a){
    //   rec.printRecord();
    //}
+   TieredCompaction tc = new TieredCompaction();
+   Timer timer = new Timer(true);
+   TimerTask task = new CompactHelper(tc);
+
+   timer.schedule(task, 43200000, 86400000);
+
+
 
    Mem m = new Mem();
    WAL w = new WAL();
 
    Engine e = new Engine(w,m);
 
-   e.searchTables();
+   Record jon = e.read(40);   
+   System.out.println("Returned Record: " + jon.key + " " + jon.value + " " + jon.opType);
 
-      
-   /*SSTable s = new SSTable(arr);
-   int counter = 1;
+   int success = e.write(200, "Ned Stark");
+   int s = e.delete(200);
 
-   s.write();
-   s.flushToDisk(counter, 0);
-   counter++;*/
-
-   
-   /*TieredCompaction tc = new TieredCompaction();
-   tc.compact();*/
-
-
-    /*Serializer s = new Serializer();
-
-    for (Record rec : arr){
-      byte[] encoded = s.serializeRecord(rec);
-      s.deserializeRecord(encoded);
-    }*/
-   
-     /*Mem m = new Mem();
-     m.setKeyValue(r);
-     m.setKeyValue(r1);
-     m.setKeyValue(r2);
-     m.setKeyValue(r3);
-
-     System.out.println(m.getValue(100).value);
-
-     ArrayList<Record> k = m.flush();
-
-     System.out.println("flushed values: ");
-     for (Record rec : k){
-        System.out.println("Key: "+ rec.key + " value: "+ rec.value + " opType: " + rec.opType);
-     }*/
-   
-   
-   
-   
-   /*for (Record rec : arr){
-      rec.printRecord();
-   }
-
-   WAL wal = new WAL();
-   wal.addRecord(r);
-   wal.addRecord(r1);
-   wal.addRecord(r2);
-   wal.addRecord(r3);
-
-   wal.flush();
-   System.out.println(wal.walArr.size());
-   wal.replay();
-   wal.clear();*/
-
-
-   /*s.dataOffset = 1000;
-   s.indexOffset = 2000;
-   s.bloomOffset = 3000;
-   s.footerOffset = 4000;
-
-   s.writeFooter();*/
-
-   //s.writeBloomFilter(arr);
-   //s.writeDataBlock(arr);
-
-  /* Serializer e = new Serializer();
-   byte[] encoded = e.serializeRecord(r);
-   Record decoded = e.deserializeRecord(encoded);*/
-
-
-   
-    
+       
  }
 }
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+class CompactHelper extends TimerTask {
+
+   TieredCompaction compactor;
+   public static int i = 0;
+
+   CompactHelper(TieredCompaction compactor){
+      this.compactor = compactor;
+   }
+    
+   public void run(){
+      System.out.println("Timer ran: " + i++);
+      System.out.println("Compact Daemon Running...");
+      this.compactor.compact();
+    }
+
+}
+*/
+
+
+
+/*
 
 class TieredCompaction {
 
@@ -366,7 +437,7 @@ class TieredCompaction {
    }
 }
 
-
+*/
 
 
 

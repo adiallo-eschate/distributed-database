@@ -12,11 +12,6 @@ class WAL {
       }
 
       void addRecord(Record r){
-
-         if ((r.opType > 2) || (r.opType < 0)){
-            System.out.println("WAL: Invalid Record");
-            return;
-         }
             
          String walRecord = "";
 
@@ -37,6 +32,8 @@ class WAL {
          }
       
          System.out.println("Add command to WAL: " + walRecord);
+         
+         flush();
       }
 
       ArrayList<String> replay(){
@@ -71,7 +68,7 @@ class WAL {
                bw.write("\n");
             }
 
-            this.walArr.clear();
+            this.walArr.clear();  // clears in memory data struct
 
          } catch (IOException e){
             e.printStackTrace();
