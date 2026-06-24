@@ -1,4 +1,20 @@
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
+
+
+enum MessageType {
+    DISCOVER,
+    JOIN,
+    JOIN_ACK,
+    HEARTBEAT,
+    MEMBERSHIP_UPDATE,
+    RPC
+}
 
 
 class Packet {
@@ -6,12 +22,18 @@ class Packet {
     int seqNum;
     String ipAddress;
     int port;
+    MessageType messageType;
+    /**
+     * int program;
+     * int procedure;
+     */
 
-    Packet(int sender, int seqNum, String ipAddress, int port){
+    Packet(int sender, String ipAddress, int port, int seqNum, MessageType messageType){
         this.sender = sender;
-        this.seqNum = seqNum;
         this.ipAddress = ipAddress;
         this.port = port;
+        this.seqNum = seqNum;
+        this.messageType = messageType;
     }
 }
 
@@ -88,6 +110,8 @@ public class Node {
 
     public static void main(String[] args){
         System.out.println("Node!");
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         
         Node n = new Node(65, "127.0.0.1", 9090);
         n.addSelf();
@@ -95,11 +119,37 @@ public class Node {
 
         TCPClient c = new TCPClient();
 
-        ServerRunner runnable = new ServerRunner(9090);
-        Thread thread = new Thread(runnable);
-        thread.start();
+        Future<Packet> future = executor.submit(() -> {
+            
+            int port = n.portNumber;
 
+            System.out.println("Thread is Running Successfully" + port);
+            TCPServer s = new TCPServer();
+            return s.open(port);
+
+        });
+
+
+        /*ServerRunner runnable = new ServerRunner(9090);
+        Thread thread = new Thread(runnable);
+        thread.start();*/
+        
         c.connect("localhost", 9090);
+
+        Packet pac = null;
+
+        try {
+            pac = future.get();
+            executor.shutdown();
+        } catch (InterruptedException | ExecutionException e){
+            e.printStackTrace();
+        }
+
+        System.out.println("We Did It: "+ pac.messageType);
+        System.out.print(" " + pac.sender);
+        System.out.print(" "+ pac.ipAddress);
+        System.out.print(" "+ pac.port);
+        
 
     }
 }
@@ -121,4 +171,5 @@ class ServerRunner implements Runnable {
         s.open(this.serverPort);
 
     }
+
 }

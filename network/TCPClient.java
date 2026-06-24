@@ -22,7 +22,7 @@ public class TCPClient {
 
     byte[] packetToBytes(Packet p){
 
-        int totalLength = 4 + 4 + 4 + 4 + p.ipAddress.length();
+        int totalLength = 4 + 4 + 4 + 4 + 4 + p.ipAddress.length();
         int pads = (4 - totalLength % 4) % 4;
 
 
@@ -30,6 +30,7 @@ public class TCPClient {
         byte[] temp = new byte[totalLength + pads];
         int i = 0;
 
+        for(byte h : encodeInt(p.messageType.ordinal())) temp[i++] = h; 
         for (byte b : encodeInt(p.sender)) temp[i++] = b;
         
         int networkStrLength = p.ipAddress.length();
@@ -54,7 +55,7 @@ public class TCPClient {
             OutputStream out = socket.getOutputStream();
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            Packet p = new Packet(65, 123, "localhost", 9090);
+            Packet p = new Packet(65, "localhost", 9090, 123, MessageType.DISCOVER);
 
             byte[] bytes = packetToBytes(p);
             System.out.println("In Client: " + Arrays.toString(bytes));
