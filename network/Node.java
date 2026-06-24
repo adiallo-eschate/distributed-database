@@ -12,22 +12,26 @@ enum MessageType {
     JOIN,
     JOIN_ACK,
     HEARTBEAT,
-    MEMBERSHIP_UPDATE,
-    RPC
+    RPCEXECUTOR,
+    RPCRESULTS
 }
 
 
 class Packet {
     int sender;
     int seqNum;
-    String ipAddress;
+    String ipAddress = null;
     int port;
     MessageType messageType;
-    /**
-     * int program;
-     * int procedure;
-     */
+    ArrayList<Node> members = null;
+    String ack = null;
+    String heartBeat = null;
+    int procedure;
+    byte[] args = null;
+    byte[] results = null;
 
+
+    // discover
     Packet(int sender, String ipAddress, int port, int seqNum, MessageType messageType){
         this.sender = sender;
         this.ipAddress = ipAddress;
@@ -35,6 +39,67 @@ class Packet {
         this.seqNum = seqNum;
         this.messageType = messageType;
     }
+
+    // join
+    Packet(int sender, String ipAddress, int port, int seqNum, 
+    MessageType messageType, ArrayList<Node> members){
+        this.sender = sender;
+        this.ipAddress = ipAddress;
+        this.port = port;
+        this.seqNum = seqNum;
+        this.messageType = messageType;
+        this.members = members;
+    }
+
+    // join_ack
+    /*Packet(int sender, String ipAddress, int port, int seqNum, 
+    MessageType messageType, String ack){
+        this.sender = sender;
+        this.ipAddress = ipAddress;
+        this.port = port;
+        this.seqNum = seqNum;
+        this.messageType = messageType;
+        this.ack = ack;
+    }*/
+
+    // heartbeat
+    Packet(int sender, String ipAddress, int port, int seqNum, 
+    MessageType messageType, String heartBeat){
+        this.sender = sender;
+        this.ipAddress = ipAddress;
+        this.port = port;
+        this.seqNum = seqNum;
+        this.messageType = messageType;
+        
+        if (!(heartBeat.equalsIgnoreCase("heartbeat"))){
+            System.out.println("Heartbeat variable must be 'heartbeat'");
+            System.exit(0);
+        }
+        this.heartBeat = heartBeat.toLowerCase();
+    }
+
+    // rpc sender
+    Packet(int sender, String ipAddress, int port, int seqNum, 
+    MessageType messageType, int procedure, byte[] args){
+        this.sender = sender;
+        this.ipAddress = ipAddress;
+        this.port = port;
+        this.seqNum = seqNum;
+        this.messageType = messageType;
+        this.procedure = procedure;
+        this.args = args;
+    }
+
+    // rpc reply
+    Packet(int sender, String ipAddress, int port, int seqNum, 
+    MessageType messageType, byte[] results){
+        this.sender = sender;
+        this.ipAddress = ipAddress;
+        this.port = port;
+        this.seqNum = seqNum;
+        this.messageType = messageType;
+    }
+
 }
 
 
@@ -145,10 +210,31 @@ public class Node {
             e.printStackTrace();
         }
 
-        System.out.println("We Did It: "+ pac.messageType);
-        System.out.print(" " + pac.sender);
-        System.out.print(" "+ pac.ipAddress);
-        System.out.print(" "+ pac.port);
+       switch(pac.messageType){
+            case DISCOVER:
+                System.out.println("Discover Packet");
+                // callJoin();
+                break;
+            case JOIN:
+                System.out.println("Join Packet");
+                // callJoin_ack()
+                break;
+            case JOIN_ACK:
+                System.out.println("Join_Ack Packet");
+
+                break;
+            case HEARTBEAT:
+                System.out.println("Heartbeat Packet");
+                // callheartBeat();
+                break;
+            case RPCEXECUTOR:
+                System.out.println("RPC Packet");
+                // callExecuteProgram
+                break;
+            case RPCRESULTS:
+                System.out.println("RPC results");
+                break;
+       }
         
 
     }
