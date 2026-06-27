@@ -8,6 +8,7 @@ import java.io.*;
 class Server {
 
     int nodeId;
+    //RaftNode raft;
 
     ArrayList<Node1> members = null;
 
@@ -18,6 +19,7 @@ class Server {
 
         this.nodeId = nodeId;
         this.members = members;
+        //this.raft = new RaftNode(nodeId, members);
     }
 
 
@@ -88,12 +90,24 @@ class Server {
     }
 
 
-    String handleVote(String message) {
+    /*String handleVote(String message) {
 
         Packet p = Packet.parsePacket(message);
 
-        return "VOTE ACK TERM " + p.term;
-    }
+        if (p.term < this.raft.currentTerm) {
+            return "VOTE DENIED " + this.raft.currentTerm;
+        }
+
+        if (this.raft.votedFor == -1 || this.raft.votedFor == p.nodeId) {
+
+            this.raft.votedFor = p.nodeId;
+            this.raft.currentTerm = p.term;
+
+            return "VOTE GRANTED " + this.raft.currentTerm;
+        }
+
+        return "VOTE DENIED " + this.raft.currentTerm;
+    }*/
 
 
     String handleAppendEntries(String message) {

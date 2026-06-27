@@ -1,6 +1,5 @@
 
 
-
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.*;
@@ -192,18 +191,21 @@ public class Node1 {
 
     ArrayList<LogEntry> log = new ArrayList<>();
 
+    //RaftNode raft;
+
 
     Node1(int nodeId, String ipAddress, int port, boolean addNetwork) {
 
         this.nodeId = nodeId;
         this.port = port;
         this.ipAddress = ipAddress;
+        //this.raft = new RaftNode(nodeId, members);
 
         if (addNetwork) {
 
             this.members = new ArrayList<>();
 
-            this.client = new Client(this.nodeId, this.members);
+            this.client = new Client(this.nodeId, this.members /**, this.raft */);
             this.server = new Server(this.nodeId, this.members);
 
             this.server.serve(this.port);

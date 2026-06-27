@@ -11,8 +11,10 @@ class Client {
 
     ArrayList<Node1> members = null;
 
+    //RaftNode raft;
 
-    Client(int nodeId, ArrayList<Node1> members) {
+
+    Client(int nodeId, ArrayList<Node1> members /**, RaftNode raft */) {
         this.nodeId = nodeId;
         this.members = members;
     }
@@ -43,6 +45,27 @@ class Client {
             String response = in.readLine();
 
             System.out.println("Server said: " + response);
+
+            /**
+             * if (response != null && response.startsWith("VOTE GRANTED")) {
+
+                        raft.handleVoteResponse(
+                                raft.currentTerm,
+                                dstPort,  
+                                1
+                        );
+                    }
+                    
+                    if (response != null && response.startsWith("VOTE DENIED")) {
+                    
+                        raft.handleVoteResponse(
+                                raft.currentTerm,
+                                dstPort,
+                                0
+                        );
+                    }
+             */
+
 
         } catch (Exception e) {
 
