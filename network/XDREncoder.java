@@ -223,7 +223,7 @@ class XDREncoder {
         return temp;
     }
 
-/*
+
     byte[] encodeUnsigedInt(int num){
         
         byte[] temp = new byte[4];
@@ -236,8 +236,8 @@ class XDREncoder {
 
         return temp;
     }
-*/
-/*
+
+
     byte[] encodeEnum (String[] enumerations, String which){
 
         for(int i = 0 ; i < enumerations.length; i++){
@@ -258,8 +258,8 @@ class XDREncoder {
         }
 
     }
-*/
-/*
+
+
     byte[] encodeBoolean(String[] enums, String which){
         
         if (enums.length > 2){
@@ -293,9 +293,8 @@ class XDREncoder {
 
         return temp;
     }
-*/
 
-/*
+
     byte[] encodeOpaqueVariableLen(byte[] opaqueData){       // simple adds padding
             
             byte[] newOpaque;
@@ -317,7 +316,7 @@ class XDREncoder {
 
             return newOpaque;
     }
-*/
+
 
 
     public static void main(String[] args){
