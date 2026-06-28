@@ -21,10 +21,10 @@ public class RaftNode {
 
     volatile long lastHeartbeat = System.currentTimeMillis();
 
-    // election tuning
+    // for elections
     int electionTimeoutMs = 3000;
 
-    // vote tracking (candidate only)
+    // track the votes for the candidate
     Set<Integer> votesReceived = ConcurrentHashMap.newKeySet();
 
     RaftNode(int id, List<Node1> peers) {
@@ -34,9 +34,8 @@ public class RaftNode {
         startElectionTimer();
     }
 
-    // -------------------------
-    // Election timer
-    // -------------------------
+
+    // timer
     void startElectionTimer() {
         scheduler.scheduleAtFixedRate(() -> {
 
@@ -51,9 +50,8 @@ public class RaftNode {
         }, 500, 500, TimeUnit.MILLISECONDS);
     }
 
-    // -------------------------
-    // Candidate logic
-    // -------------------------
+
+    // elction
     void startElection() {
 
         state = State.CANDIDATE;
@@ -73,9 +71,7 @@ public class RaftNode {
         }
     }
 
-    // -------------------------
-    // RPC: RequestVote
-    // -------------------------
+
     void sendRequestVote(Node1 peer) {
 
         Packet p = new Packet(
@@ -88,9 +84,7 @@ public class RaftNode {
         peer.client.connect(Packet.stringPacket(p), peer.ipAddress, peer.port);
     }
 
-    // -------------------------
-    // Incoming vote response
-    // -------------------------
+  
     synchronized void handleVoteResponse(int term, int voterId, int voteGranted) {
 
         if (term > currentTerm) {
@@ -109,9 +103,7 @@ public class RaftNode {
         }
     }
 
-    // -------------------------
-    // Leader transition
-    // -------------------------
+  
     void becomeLeader() {
 
         state = State.LEADER;
@@ -120,9 +112,7 @@ public class RaftNode {
         System.out.println("Node " + id + " becomes LEADER term " + currentTerm);
     }
 
-    // -------------------------
-    // Follower transition
-    // -------------------------
+ 
     void becomeFollower(int newTerm) {
 
         state = State.FOLLOWER;
@@ -130,9 +120,7 @@ public class RaftNode {
         votedFor = -1;
     }
 
-    // -------------------------
-    // heartbeat update hook
-    // -------------------------
+    // heartbeat
     void receivedHeartbeat(int term, int leaderId) {
 
         if (term >= currentTerm) {
