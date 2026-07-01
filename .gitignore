@@ -3,3 +3,8 @@ practice
 road
 *.txt
 level*
+.gitignore
+Transact.java
+txn.java
+Manager.java
+txnMn.java
